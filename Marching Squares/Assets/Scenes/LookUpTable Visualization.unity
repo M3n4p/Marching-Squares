@@ -1287,7 +1287,7 @@ MonoBehaviour:
   lowerLeftToggle: {fileID: 25779467}
   lowerRightToggle: {fileID: 184923316}
   caseText: {fileID: 394045057}
-  mat: {fileID: 2100000, guid: 88493b5e3d9fc4a4289c9e74e845fcda, type: 2}
+  camera: {fileID: 963194227}
 --- !u!4 &1281658950
 Transform:
   m_ObjectHideFlags: 0
@@ -1321,7 +1321,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 0}
+  - {fileID: 2100000, guid: 88493b5e3d9fc4a4289c9e74e845fcda, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
