@@ -26,8 +26,10 @@ public class LookUpGenerator : MonoBehaviour
 
     public class NodeSquare
     {
-        Node upperLeft, upperRight, lowerLeft, lowerRight;
+        readonly Node upperLeft, upperRight, lowerLeft, lowerRight;
         Vector3 midLeft, midDown, midRight, midUp;
+
+        int caseNumber;
 
         public NodeSquare(Node uLeft, Node uRight, Node lLeft, Node lRight)
         {
@@ -40,6 +42,8 @@ public class LookUpGenerator : MonoBehaviour
             midDown = CalcMidPoint(lowerLeft, lowerRight);
             midRight = CalcMidPoint(upperRight, lowerRight);
             midUp = CalcMidPoint(upperLeft, upperRight);
+
+            caseNumber = 0;
         }
 
         private Vector3 CalcMidPoint(Node n1, Node n2)
@@ -51,15 +55,131 @@ public class LookUpGenerator : MonoBehaviour
         {
             return Vector3.Lerp(n1.position, n2.position, iso);
         }
+
+        public void ChangeNodeActivation(Toggle change, Node n, Text text)
+        {
+            n.isActive = change.isOn;
+            caseNumber = CalcCaseNumber();
+            text.text = $"Case: {caseNumber}";
+        }
+
+        public int CalcCaseNumber()
+        {
+            int caseNumber = 0;
+            if (upperLeft.isActive) caseNumber |= 8;
+            if (upperRight.isActive) caseNumber |= 4;
+            if (lowerRight.isActive) caseNumber |= 2;
+            if (lowerLeft.isActive) caseNumber |= 1;
+
+            return caseNumber;
+        }
+
+        public Mesh CalcLineMesh()
+        {
+            Mesh mesh = new Mesh();
+            Vector3[] vertices = CalcLineVertices();
+            int[] indices = new int[vertices.Length];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                indices[i] = i;
+            }
+
+            mesh.vertices = vertices;
+            mesh.SetIndices(indices, MeshTopology.Lines, 0);
+            return mesh;
+        }
+
+        private Vector3[] CalcLineVertices()
+        {
+            List<Vector3> vertices = new List<Vector3>();
+            switch(caseNumber)
+            {
+                // no node active
+                case 0:
+                    break;
+
+                // 1 node active 
+                case 1:
+                    vertices.Add(midLeft);
+                    vertices.Add(midDown);
+                    break;
+                case 2:
+                    vertices.Add(midDown);
+                    vertices.Add(midRight);
+                    break;
+                case 4:
+                    vertices.Add(midUp);
+                    vertices.Add(midRight);
+                    break;
+                case 8:
+                    vertices.Add(midUp);
+                    vertices.Add(midLeft);
+                    break;
+
+                // 2 nodes active
+                case 3:
+                    vertices.Add(midLeft);
+                    vertices.Add(midRight);
+                    break;
+                case 6:
+                    vertices.Add(midDown);
+                    vertices.Add(midUp);
+                    break;
+                case 9:
+                    vertices.Add(midDown);
+                    vertices.Add(midUp);
+                    break;
+                case 12:
+                    vertices.Add(midLeft);
+                    vertices.Add(midRight);
+                    break;
+
+                case 5:
+                    vertices.Add(midLeft);
+                    vertices.Add(midUp);
+                    vertices.Add(midDown);
+                    vertices.Add(midRight);
+                    break;
+                case 10:
+                    vertices.Add(midLeft);
+                    vertices.Add(midDown);
+                    vertices.Add(midUp);
+                    vertices.Add(midRight);
+                    break;
+
+                // 3 nodes active
+                case 7:
+                    vertices.Add(midLeft);
+                    vertices.Add(midUp);
+                    break;
+                case 11:
+                    vertices.Add(midUp);
+                    vertices.Add(midRight);
+                    break;
+                case 13:
+                    vertices.Add(midDown);
+                    vertices.Add(midRight);
+                    break;
+                case 14:
+                    vertices.Add(midLeft);
+                    vertices.Add(midDown);
+                    break;
+
+                // All nodes active
+                case 15:
+                    break;
+            }
+
+            return vertices.ToArray();
+        }
     }
 
     public Toggle upperLeftToggle, upperRightToggle, lowerLeftToggle, lowerRightToggle;
     private Node upperLeft, upperRight, lowerLeft, lowerRight;
+    private NodeSquare nSquare;
     public Text caseText;
 
     public new Camera camera;
-
-    private int caseNumber;
 
     // Start is called before the first frame update
     void Start()
@@ -69,52 +189,28 @@ public class LookUpGenerator : MonoBehaviour
         lowerLeft = new Node(lowerLeftToggle.transform.position, false);
         lowerRight = new Node(lowerRightToggle.transform.position, false);
 
-        upperLeftToggle.onValueChanged.AddListener(delegate { ChangeNodeActivation(upperLeftToggle, upperLeft); });
-        upperRightToggle.onValueChanged.AddListener(delegate { ChangeNodeActivation(upperRightToggle, upperRight); });
-        lowerLeftToggle.onValueChanged.AddListener(delegate { ChangeNodeActivation(lowerLeftToggle, lowerLeft); });
-        lowerRightToggle.onValueChanged.AddListener(delegate { ChangeNodeActivation(lowerRightToggle, lowerRight); });
+        nSquare = new NodeSquare(upperLeft, upperRight, lowerLeft, lowerRight);
 
-        caseNumber = 0;
+        upperLeftToggle.onValueChanged.AddListener(delegate { nSquare.ChangeNodeActivation(upperLeftToggle, upperLeft, caseText); });
+        upperRightToggle.onValueChanged.AddListener(delegate { nSquare.ChangeNodeActivation(upperRightToggle, upperRight, caseText); });
+        lowerLeftToggle.onValueChanged.AddListener(delegate { nSquare.ChangeNodeActivation(lowerLeftToggle, lowerLeft, caseText); });
+        lowerRightToggle.onValueChanged.AddListener(delegate { nSquare.ChangeNodeActivation(lowerRightToggle, lowerRight, caseText); });
 
-        Vector3 start = new Vector3(0, 2, 0);
-        Vector3 end = new Vector3(5, 0, 0);
-        //float thickness = 2.0f;
-
-        Vector3 directionLine = end - start;
-        Vector3 directionCamera = camera.transform.position - start;
-
-        Vector3 cross = Vector3.Cross(directionLine, directionCamera);
-
-        Vector3[] vertices = { start, cross, start, end };
-        int[] indices = { 0, 1, 2, 3 };
-
-        Mesh mesh = new Mesh();
-        mesh.vertices = vertices;
-        mesh.SetIndices(indices, MeshTopology.Lines, 0);
-
-        GetComponent<MeshFilter>().mesh = mesh;
-    }
-
-    private void ChangeNodeActivation(Toggle change, Node n)
-    {
-        n.isActive = change.isOn;
-        caseNumber = calcCase();
-        caseText.text = $"Case: {caseNumber}";
-    }
-
-    private int calcCase()
-    {
-        int _caseNumber = 0;
-        if (upperLeft.isActive) _caseNumber |= 8;
-        if (upperRight.isActive) _caseNumber |= 4;
-        if (lowerRight.isActive) _caseNumber |= 2;
-        if (lowerLeft.isActive) _caseNumber |= 1;
-        
-        return _caseNumber;
+        upperLeftToggle.onValueChanged.AddListener(RecalculateLineMesh);
+        upperRightToggle.onValueChanged.AddListener(RecalculateLineMesh);
+        lowerLeftToggle.onValueChanged.AddListener(RecalculateLineMesh);
+        lowerRightToggle.onValueChanged.AddListener(RecalculateLineMesh);
     }
 
     // Update is called once per frame
     void Update()
     {
+
+    }
+
+    private void RecalculateLineMesh(bool isOn)
+    {
+        Mesh mesh = nSquare.CalcLineMesh();
+        GetComponent<MeshFilter>().mesh = mesh;
     }
 }
