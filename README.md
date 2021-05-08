@@ -1,2 +1,2 @@
 # Marching-Squares
-Project that implements the marching squares algorithm.
+Project that implements an interactive visualization of all possible line cases of a marching square.
